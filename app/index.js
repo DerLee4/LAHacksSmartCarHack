@@ -1,19 +1,18 @@
 'use strict';
-
 const cors = require('cors');
 const express = require('express');
 const smartcar = require('smartcar');
 
 const app = express()
   .use(cors());
-const port = 8000;
+const port = 3000;
 
 const client = new smartcar.AuthClient({
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  redirectUri: process.env.REDIRECT_URI,
-  scope: ['read_vehicle_info'],
-  testMode: true,
+  clientId: 'd5a401e2-cac3-4c1c-b3c0-0a9d073c1ee7',
+  clientSecret: '58fb8aef-a633-4279-b0d2-ab276b5fc855',
+  redirectUri: 'http://localhost:3000/exchange',
+  scope: ['read_vehicle_info', 'read_location'],
+  testMode: false,
 });
 
 // global variable to save our accessToken
@@ -32,7 +31,7 @@ app.get('/exchange', function(req, res) {
       // in a production app you'll want to store this in some kind of persistent storage
       access = _access;
 
-      res.sendStatus(200);
+      res.redirect('/location');
     });
 });
 
@@ -60,5 +59,20 @@ app.get('/vehicle', function(req, res) {
       res.json(info);
     });
 });
+
+app.get('/location', async function(req,res){
+
+// List all vehicles associated with this access token
+const {vehicles} = await smartcar.getVehicleIds(access.accessToken);
+
+// Use the first vehicle
+const vehicle = new smartcar.Vehicle(vehicles[0], access.accessToken);
+
+// Fetch the vehicle's location
+const location = await vehicle.location();
+res.send(location);
+}
+
+)
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
